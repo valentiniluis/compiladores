@@ -1,3 +1,7 @@
+import { createReadStream } from 'fs';
+import { createInterface } from 'readline';
+
+
 const INITIAL_IDENTIFIERS: string = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_';
 const ALL_NUMBERS = '0123456789';
 const ALL_IDENTIFIERS: string = INITIAL_IDENTIFIERS + ALL_NUMBERS;
@@ -73,12 +77,24 @@ class Token {
 
 const TS: Token[] = [];
 
-function parseFile(filename: string) {
+async function parseFile(filename: string) {
+    const fileStream = createReadStream(filename);
+    const rl = createInterface({
+        input: fileStream,
+        crlfDelay: Infinity
+    });
 
+    let lineNumber = 1;
+    for await (const line of rl) {
+        parseLine(line, lineNumber);
+        lineNumber++;
+    }
 }
 
 function printTokens() {
-
+    for (const token of TS) {
+        console.log(`Linha ${token.line}: ${token.identifier} (${token.label})`);
+    }
 }
 
 function parseLine(line: string, lineNumber: number) {
@@ -116,5 +132,9 @@ function parseLine(line: string, lineNumber: number) {
         }
     }
 }
+
+
+await parseFile('program.py');
+printTokens();
 
 // def funcao(a, b):
