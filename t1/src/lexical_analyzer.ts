@@ -1,6 +1,6 @@
 import { createReadStream } from 'fs';
 import { createInterface } from 'readline';
-
+import * as path from 'path';
 
 const INITIAL_IDENTIFIERS: string = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_';
 const ALL_NUMBERS = '0123456789';
@@ -93,7 +93,7 @@ async function parseFile(filename: string) {
 
 function printTokens() {
     for (const token of TS) {
-        console.log(`Linha ${token.line}: ${token.identifier} (${token.label})`);
+        console.log(`Linha ${token.line}: ${token.identifier} ('${token.label}')`);
     }
 }
 
@@ -134,7 +134,7 @@ function parseLine(line: string, lineNumber: number) {
 }
 
 
-await parseFile('program.py');
+await parseFile(path.join(import.meta.dirname, 'program.text'));
 printTokens();
 
 // def funcao(a, b):
