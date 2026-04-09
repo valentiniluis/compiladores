@@ -133,7 +133,7 @@ function parseLine(line: string, lineNumber: number) {
     }
 }
 
-
+initializeTransitions();
 await parseFile(path.join(import.meta.dirname, 'program.text'));
 printTokens();
 
