@@ -1,1 +1,1 @@
-def funcao(a, b):
+def funcao(arg1, arg2, _x, _1): 

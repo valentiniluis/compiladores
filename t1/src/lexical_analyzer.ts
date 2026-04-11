@@ -12,35 +12,40 @@ import {
 
 class Token {
     line: number;
-    identifier: string;
+    type: string;
     label: string;
+    identifierNumber: number | undefined;
 
-    constructor(line: number, identifier: string, label: string) {
+    constructor(line: number, type: string, label: string, identifierNumber?: number) {
         this.line = line;
-        this.identifier = identifier;
+        this.type = type;
         this.label = label;
+        this.identifierNumber = identifierNumber;
     }
 }
 
+const IDENTIFIERS: string[] = [];
 const TS: Token[] = [];
 
-async function parseFile(filename: string) {
-    const fileStream = createReadStream(filename);
-    const rl = createInterface({
-        input: fileStream,
-        crlfDelay: Infinity
-    });
-
-    let lineNumber = 1;
-    for await (const line of rl) {
-        parseLine(line, lineNumber);
-        lineNumber++;
+function insertToken(token: Token) {
+    if (token.type === 'ID') {
+        let idIndex = IDENTIFIERS.indexOf(token.label);
+        if (idIndex === -1) {
+            IDENTIFIERS.push(token.label);
+            idIndex = IDENTIFIERS.length - 1;
+        }
+        token.identifierNumber = idIndex;
     }
+    TS.push(token);
 }
 
 function printTokens() {
+    function getTokenTypeString(token: Token) {
+        return token.type === "ID" ? `ID, ${token.identifierNumber}` : token.type;
+    }
+
     for (const token of TS) {
-        console.log(`Linha ${token.line}: ${token.identifier} ('${token.label}')`);
+        console.log(`Linha ${token.line}: ${getTokenTypeString(token)} ('${token.label}')`);
     }
 }
 
@@ -53,7 +58,6 @@ function parseLine(line: string, lineNumber: number) {
         lexeme = '';
     }
 
-
     for (let i = 0; i < line.length; i++) {
         const char = line[i] as string;
 
@@ -61,7 +65,7 @@ function parseLine(line: string, lineNumber: number) {
 
         if (SEPARATORS.includes(char) && lexeme !== '') {
             if (IDENTIFIER_STATES.includes(state)) state = 'ID';
-            TS.push(new Token(lineNumber, state, lexeme));
+            insertToken(new Token(lineNumber, state, lexeme));
             resetAutomata();
             i -= 1;
             continue;
@@ -71,13 +75,26 @@ function parseLine(line: string, lineNumber: number) {
         state = getNextState(state, char);
     
         if (SINGLE_CHAR_TOKENS.includes(state)) {
-            TS.push(new Token(lineNumber, state, lexeme));
+            insertToken(new Token(lineNumber, state, lexeme));
             resetAutomata();
         }
     }
 }
 
+async function parseFile(filename: string) {
+    const fileStream = createReadStream(filename);
+    const rl = createInterface({
+        input: fileStream,
+        crlfDelay: Infinity
+    });
+
+    let lineNumber = 1;
+    for await (const line of rl) {
+        parseLine(line, lineNumber);
+        insertToken(new Token(lineNumber, 'NOVA_LINHA', '\\n'));
+        lineNumber++;
+    }
+}
+
 await parseFile(path.join(import.meta.dirname, 'program.text'));
 printTokens();
-
-// def funcao(a, b):
