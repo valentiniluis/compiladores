@@ -14,38 +14,24 @@ class Token {
     line: number;
     type: string;
     label: string;
-    identifierNumber: number | undefined;
 
-    constructor(line: number, type: string, label: string, identifierNumber?: number) {
+    constructor(line: number, type: string, label: string) {
         this.line = line;
         this.type = type;
         this.label = label;
-        this.identifierNumber = identifierNumber;
     }
 }
 
-const IDENTIFIERS: string[] = [];
 const TS: Token[] = [];
 
 function insertToken(token: Token) {
-    if (token.type === 'ID') {
-        let idIndex = IDENTIFIERS.indexOf(token.label);
-        if (idIndex === -1) {
-            IDENTIFIERS.push(token.label);
-            idIndex = IDENTIFIERS.length - 1;
-        }
-        token.identifierNumber = idIndex;
-    }
+    if (IDENTIFIER_STATES.includes(token.type)) token.type = 'ID';
     TS.push(token);
 }
 
 function printTokens() {
-    function getTokenTypeString(token: Token) {
-        return token.type === "ID" ? `ID, ${token.identifierNumber}` : token.type;
-    }
-
     for (const token of TS) {
-        console.log(`Linha ${token.line}: ${getTokenTypeString(token)} ('${token.label}')`);
+        console.log(`Linha ${token.line}: ${token.type} ('${token.label}')`);
     }
 }
 
@@ -64,7 +50,6 @@ function parseLine(line: string, lineNumber: number) {
         if (state === 'S' && char === ' ') continue;
 
         if (SEPARATORS.includes(char) && lexeme !== '') {
-            if (IDENTIFIER_STATES.includes(state)) state = 'ID';
             insertToken(new Token(lineNumber, state, lexeme));
             resetAutomata();
             i -= 1;
@@ -73,12 +58,15 @@ function parseLine(line: string, lineNumber: number) {
 
         lexeme += char;
         state = getNextState(state, char);
-    
+
         if (SINGLE_CHAR_TOKENS.includes(state)) {
             insertToken(new Token(lineNumber, state, lexeme));
             resetAutomata();
         }
     }
+
+    // verificando se sobrou um lexema ao final da linha
+    if (lexeme !== "") insertToken(new Token(lineNumber, state, lexeme));
 }
 
 async function parseFile(filename: string) {
