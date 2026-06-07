@@ -1,26 +1,13 @@
 import { createReadStream } from 'fs';
 import { createInterface } from 'readline';
-import * as path from 'path';
 
 import { 
     TRANSITIONS,
     IDENTIFIER_STATES,
     SEPARATORS,
     SINGLE_CHAR_TOKENS,
-    getNextState
+    Token,
 } from './constants.js';
-
-class Token {
-    line: number;
-    type: string;
-    label: string;
-
-    constructor(line: number, type: string, label: string) {
-        this.line = line;
-        this.type = type;
-        this.label = label;
-    }
-}
 
 const TS: Token[] = [];
 
@@ -29,10 +16,8 @@ function insertToken(token: Token) {
     TS.push(token);
 }
 
-function printTokens() {
-    for (const token of TS) {
-        console.log(`Linha ${token.line}: ${token.type} ('${token.label}')`);
-    }
+function getNextState(currentState: keyof typeof TRANSITIONS, symbol: string) {
+    return TRANSITIONS?.[currentState]?.[symbol] || 'ERRO';
 }
 
 function parseLine(line: string, lineNumber: number) {
@@ -69,7 +54,7 @@ function parseLine(line: string, lineNumber: number) {
     if (lexeme !== "") insertToken(new Token(lineNumber, state, lexeme));
 }
 
-async function parseFile(filename: string) {
+export async function lexicalAnalysis(filename: string) {
     const fileStream = createReadStream(filename);
     const rl = createInterface({
         input: fileStream,
@@ -81,7 +66,18 @@ async function parseFile(filename: string) {
         parseLine(line, lineNumber);
         lineNumber++;
     }
+
+    insertToken(new Token(lineNumber, '$', '$'));
+    return TS;
 }
 
-await parseFile(path.join(import.meta.dirname, 'program.text'));
-printTokens();
+export function printTokens(TS: Token[]) {
+    for (const token of TS) {
+        console.log(`Linha ${token.line}: ${token.type} ('${token.label}')`);
+    }
+}
+
+export function printTokensShort(TS: Token[]) {
+    const output: string = TS.map(token => token.type).join(' ');
+    console.log(output);
+}

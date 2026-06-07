@@ -1,3 +1,16 @@
+
+export class Token {
+    line: number;
+    type: string;
+    label: string;
+
+    constructor(line: number, type: string, label: string) {
+        this.line = line;
+        this.type = type;
+        this.label = label;
+    }
+}
+
 export const SINGLE_CHAR_TOKENS: string[] = [',', '(', ')', ':'];
 
 export const IDENTIFIER_STATES: string[] = ['A', 'B', 'ID'];
@@ -15,10 +28,6 @@ export const TRANSITIONS: Record<string, Record<string, string>> = {
     ')':             {},
     ':':             {},
     ERRO:            {}
-}
-
-export function getNextState(currentState: keyof typeof TRANSITIONS, symbol: string) {
-    return TRANSITIONS?.[currentState]?.[symbol] || 'ERRO';
 }
 
 const INITIAL_IDENTIFIERS: string = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_';
