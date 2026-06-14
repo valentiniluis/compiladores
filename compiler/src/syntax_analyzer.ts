@@ -1,4 +1,14 @@
-import type { Token } from "./constants.js";
+import { Token } from "./constants.js";
+
+class AnalysisResult {
+    success: boolean;
+    error: string | undefined;
+
+    constructor(success: boolean, error: string | undefined) {
+        this.success = success;
+        this.error = error;
+    }
+};
 
 const productions: Record<number, { left: string, size: number }> = {
     0: { left: 'S', size: 6 }, // def id ( P ) :
@@ -65,13 +75,18 @@ const SLRTable: Record<number, Record<string, string>> = {
 }
 
 function getNextAction(currentState: number, column: string) {
-    return SLRTable[currentState]![column]! || 'err';
+    return SLRTable[currentState]?.[column] || 'err';
 }
 
-// pilha contendo apenas os estados
-let stack: number[] = [0];
+function addEndOfSentence(TS: Token[]) {
+    const lastToken: Token = TS[TS.length - 1]!;
+    if (lastToken.type !== '$') {
+        TS.push(new Token(lastToken.line, '$', '$'));
+    }
+    return TS;
+}
 
-function processAction(action: string, incrementPosition: () => void) {
+function processAction(action: string, stack: number[], incrementPosition: () => void) {
     if (action === 'acc') return true;
     if (action === 'err') return false;
 
@@ -88,7 +103,11 @@ function processAction(action: string, incrementPosition: () => void) {
 
         // processar goto após reduce
         const currentState: number = stack[stack.length - 1]!;
-        const gotoState: number = +getNextAction(currentState, left);
+        const nextAction: string = getNextAction(currentState, left);
+
+        if (nextAction == 'err') return false;
+
+        const gotoState: number = +nextAction;
         stack.push(gotoState);
     }
 }
@@ -99,6 +118,10 @@ function sanitizeIdentifier(id: string) {
 }
 
 export function syntaxAnalysis(TS: Token[]) {
+    TS = addEndOfSentence(TS);
+
+    // pilha contendo apenas os estados
+    let stack: number[] = [0];
    
     let position: number = 0;
 
@@ -106,22 +129,30 @@ export function syntaxAnalysis(TS: Token[]) {
         position++;
     }
 
+    let result: boolean | undefined;
+
     while (position < TS.length) {
         const currentState: number = stack[stack.length - 1]!;
         const token: Token = TS[position]!;
         const { type, line, label } = token;
         const nextAction: string = getNextAction(currentState, sanitizeIdentifier(type));
-        const result: boolean | undefined = processAction(nextAction, incrementPosition);
+        result = processAction(nextAction, stack, incrementPosition);
 
         if (result === false) {
-            console.error(`Syntax Error! Unexpected token '${label}' at line ${line}.`);
-            break;
+            return new AnalysisResult(false, `Syntax Error! Unexpected token '${label}' at line ${line}.`);
         }
 
         if (result === true) {
-            console.log("Syntax analysis completed successfully.");
-            break;
+            return new AnalysisResult(true, "Syntax analysis completed successfully.");
         }
+    }
+
+    if (result !== true) {
+        const lastToken: Token = TS[TS.length - 1]!;
+        return new AnalysisResult(false, `Syntax Error! Unexpected end of input at line ${lastToken.line} (${lastToken.type})`);
+    }
+    else {
+        return new AnalysisResult(true, "Syntax analysis completed successfully.");
     }
 
 }

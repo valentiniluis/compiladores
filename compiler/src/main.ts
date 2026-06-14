@@ -14,7 +14,7 @@ async function main() {
     console.log("\n");
 
     console.log("================================== SYNTAX ANALYSIS ==================================");
-    syntaxAnalysis(TS);
+    console.log(syntaxAnalysis(TS));
     console.log("================================== SYNTAX ANALYSIS ==================================");
 }
 

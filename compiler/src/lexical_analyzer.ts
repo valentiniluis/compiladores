@@ -67,7 +67,6 @@ export async function lexicalAnalysis(filename: string) {
         lineNumber++;
     }
 
-    insertToken(new Token(lineNumber, '$', '$'));
     return TS;
 }
 
