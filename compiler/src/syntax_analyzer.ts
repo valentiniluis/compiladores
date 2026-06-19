@@ -86,29 +86,33 @@ function addEndOfSentence(TS: Token[]) {
     return TS;
 }
 
-function processAction(action: string, stack: number[], incrementPosition: () => void) {
+function processAction(
+    action: string, 
+    stack: number[], 
+    shift: (state: number) => void,
+    reduce: (size: number) => void,
+    goto: (state: number) => void
+) {
     if (action === 'acc') return true;
     if (action === 'err') return false;
 
     const actionType = action[0];
-    const actionNumber = +action.substring(1);
 
     if (actionType === 's') {
-        stack.push(actionNumber);
-        incrementPosition();
+        const state: number = +action.substring(1);
+        shift(state);
     }
     else if (actionType === 'r') {
-        const { size, left } = productions[actionNumber]!;
-        stack = stack.slice(0, stack.length - size);
+        const production: number = +action.substring(1);
+        const { size, left } = productions[production]!;
+        reduce(size);        
 
         // processar goto após reduce
         const currentState: number = stack[stack.length - 1]!;
-        const nextAction: string = getNextAction(currentState, left);
+        const nextState: string = getNextAction(currentState, left);
 
-        if (nextAction == 'err') return false;
-
-        const gotoState: number = +nextAction;
-        stack.push(gotoState);
+        if (nextState == 'err') return false;
+        goto(+nextState);
     }
 }
 
@@ -121,12 +125,21 @@ export function syntaxAnalysis(TS: Token[]) {
     TS = addEndOfSentence(TS);
 
     // pilha contendo apenas os estados
-    let stack: number[] = [0];
+    const stack: number[] = [0];
    
     let position: number = 0;
 
-    function incrementPosition() {
+    function shift(state: number) {
         position++;
+        stack.push(state);
+    }
+
+    function reduce(size: number) {
+        stack.splice(stack.length - size, size);
+    }
+
+    function goto(state: number) {
+        stack.push(state);
     }
 
     let result: boolean | undefined;
@@ -136,7 +149,7 @@ export function syntaxAnalysis(TS: Token[]) {
         const token: Token = TS[position]!;
         const { type, line, label } = token;
         const nextAction: string = getNextAction(currentState, sanitizeIdentifier(type));
-        result = processAction(nextAction, stack, incrementPosition);
+        result = processAction(nextAction, stack, shift, reduce, goto);
 
         if (result === false) {
             return new AnalysisResult(false, `Syntax Error! Unexpected token '${label}' at line ${line}.`);
