@@ -64,6 +64,7 @@ export async function lexicalAnalysis(filename: string) {
     let lineNumber = 1;
     for await (const line of rl) {
         parseLine(line, lineNumber);
+        insertToken(new Token(lineNumber, "NL", "NL"));
         lineNumber++;
     }
 
