@@ -1,12 +1,13 @@
 import { createReadStream } from 'fs';
 import { createInterface } from 'readline';
 
+import { Token } from '../shared/constants.js';
+
 import { 
     TRANSITIONS,
     IDENTIFIER_STATES,
     SEPARATORS,
-    SINGLE_CHAR_TOKENS,
-    Token,
+    SINGLE_CHAR_TOKENS
 } from './constants.js';
 
 const TS: Token[] = [];

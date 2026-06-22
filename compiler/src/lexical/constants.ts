@@ -1,16 +1,4 @@
 
-export class Token {
-    line: number;
-    type: string;
-    label: string;
-
-    constructor(line: number, type: string, label: string) {
-        this.line = line;
-        this.type = type;
-        this.label = label;
-    }
-}
-
 export const SINGLE_CHAR_TOKENS: string[] = [',', '(', ')', ':'];
 
 export const IDENTIFIER_STATES: string[] = ['A', 'B', 'ID'];

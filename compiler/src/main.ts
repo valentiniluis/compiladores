@@ -1,8 +1,9 @@
 import path from "path";
 
-import { Token } from "./constants.js";
-import { lexicalAnalysis, printTokensShort } from "./lexical_analyzer.js";
-import { AnalysisResult, syntaxAnalysis } from './syntax_analyzer.js';
+import { Token } from "./shared/constants.js";
+import { AnalysisResult } from "./syntax/constants.js";
+import { lexicalAnalysis, printTokensShort } from "./lexical/analyzer.js";
+import { syntaxAnalysis } from './syntax/analyzer.js';
 
 async function main() {
     const TS: Token[] = await lexicalAnalysis(path.join(import.meta.dirname, 'program.text'));
@@ -15,7 +16,7 @@ async function main() {
 
     console.log("================================== SYNTAX ANALYSIS ==================================");
     const result: AnalysisResult = syntaxAnalysis(TS);
-    console.log(`Success: ${result.success}. ${result.message}`);
+    result.printResult();
     console.log("================================== SYNTAX ANALYSIS ==================================");
 }
 
